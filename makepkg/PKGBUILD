@@ -13,7 +13,7 @@ provides=("aurutils=${pkgver%%.r*}")
 depends=('git' 'jq' 'expac' 'diffstat' 'pacutils' 'parallel' 'wget')
 makedepends=('git')
 optdepends=('bash-completion: bash completion'
-            'artools: aur-chroot'
+            'artools-pkg: aur-chroot'
             'vifm: build file interaction'
             'xdelta3: generate delta files')
 
