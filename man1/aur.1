@@ -15,7 +15,7 @@ Build packages to a local repository.
 .P
 .BR aur\-chroot (1)
 .RS 4
-Build packages with systemd-nspawn.
+Build packages in a chroot.
 .RE
 
 .P
@@ -206,7 +206,7 @@ Run actions on the dependency tree of an AUR package:
 Build
 .I plasma-desktop-git
 and its dependencies with
-.BR systemd\-nspawn (1):
+.BR chroot (1):
 .EX
 
   $ aur sync -c plasma-desktop-git

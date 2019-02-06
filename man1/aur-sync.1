@@ -95,7 +95,7 @@ Alias for
 .SS Container options
 .TP
 .BR \-c ", " \-\-chroot
-Build packages with makechrootpkg. (\fBaur build \-c\fR)
+Build packages with mkchrootpkg. (\fBaur build \-c\fR)
 
 .TP
 .BI \-C " FILE" "\fR,\fP \-\-pacman\-conf=" FILE
@@ -184,24 +184,24 @@ Do not wait for user input. (\fBmakepkg \-\-noconfirm\fR)
 .BR \-r ", " \-\-rmdeps ", " \-\-rm\-deps
 Remove dependencies installed by makepkg. (\fBmakepkg \-\-rmdeps\fR)
 
-.SS makechrootpkg
+.SS mkchrootpkg
 The default build command is
-.BR "makechrootpkg \-cu" .
+.BR "mkchrootpkg \-cu" .
 See
 .BR aur\-chroot (1)
 for details.
 
 .TP
 .BI \-\-bind= DIR
-Bind a directory read-only. (\fBmakechrootpkg \-D\fR)
+Bind a directory read-only. (\fBmkchrootpkg \-D\fR)
 
 .TP
 .BI \-\-bind-rw= DIR
-Bind a directory read-write. (\fBmakechrootpkg \-d\fR)
+Bind a directory read-write. (\fBmkchrootpkg \-d\fR)
 
 .TP
 .BR \-T ", " \-\-temp
-Build in a temporary container. (\fBmakechrootpkg \-T\fR)
+Build in a temporary container. (\fBmkchrootpkg \-T\fR)
 
 .SH ENVIRONMENT
 .B AURDEST

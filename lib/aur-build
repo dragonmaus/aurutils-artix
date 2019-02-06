@@ -10,7 +10,7 @@ readonly PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 # default arguments
 chroot_args=()
 gpg_args=(--detach-sign --no-armor --batch)
-makechrootpkg_args=(-cu)
+mkchrootpkg_args=(-cu)
 makepkg_args=(--clean --syncdeps)
 repo_add_args=()
 
@@ -98,10 +98,10 @@ var_tmp=$(mktemp -d "${TMPDIR:-/var/tmp}/$argv0".XXXXXXXX)
 trap 'trap_exit' EXIT
 trap 'exit' INT
 
-# reset default makechrootpkg arguments
+# reset default mkchrootpkg arguments
 if (($#)); then
     if ((chroot)); then
-        makechrootpkg_args=("$@")
+        mkchrootpkg_args=("$@")
     else
         makepkg_args=("$@")
     fi
@@ -190,7 +190,7 @@ unset PKGDEST
   fi
 
   # PKGDEST defined here is NOT exported to the build environment.
-  # This is not a concern for container builds, as makechrootpkg
+  # This is not a concern for container builds, as mkchrootpkg
   # already has a similar mechanism. (#498)
   printf "PKGDEST='%s'\\n" "$var_tmp"
 } >"$tmp"/makepkg.conf
@@ -222,8 +222,8 @@ while IFS= read -ru "$fd" path; do
         printf '%s\n' >&2 "Running custom command: ${build_cmd[*]}"
         env PKGDEST="$var_tmp" AUR_REPO="$db_name" AUR_DBROOT="$db_root" "${build_cmd[@]}"
     elif ((chroot)); then
-        printf '%s\n' >&2 "Running makechrootpkg ${makechrootpkg_args[*]}"
-        env PKGDEST="$var_tmp" aur chroot --no-prepare "${chroot_args[@]}" -- "${makechrootpkg_args[@]}"
+        printf '%s\n' >&2 "Running mkchrootpkg ${mkchrootpkg_args[*]}"
+        env PKGDEST="$var_tmp" aur chroot --no-prepare "${chroot_args[@]}" -- "${mkchrootpkg_args[@]}"
     else
         printf '%s\n' >&2 "Running makepkg ${makepkg_args[*]}"
 

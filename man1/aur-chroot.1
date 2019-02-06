@@ -1,6 +1,6 @@
 .TH AUR-CHROOT 2018-05-20 AURUTILS
 .SH NAME
-aur\-chroot \- build packages with systemd-nspawn
+aur\-chroot \- build packages with chroot
 
 .SH SYNOPSIS
 .SY "aur chroot"
@@ -11,15 +11,15 @@ aur\-chroot \- build packages with systemd-nspawn
 .OP \-\-no\-build
 .OP \-\-no\-prepare
 .OP \-\-
-.RI [ "makechrootpkg args" ]
+.RI [ "mkchrootpkg args" ]
 .YS
 
 .SH DESCRIPTION
-Build packages in an nspawn container, adding the results to a local
+Build packages in an chroot container, adding the results to a local
 repository.
 
 .SH OPTIONS
-All arguments after \-\- are passed to \fBmakechrootpkg\fR.
+All arguments after \-\- are passed to \fBmkchrootpkg\fR.
 
 .TP
 .BI \-D " DIR" "\fR,\fP \-\-directory=" DIR
@@ -35,7 +35,7 @@ if unset).
 If the
 .B \-T
 parameter is specified to
-.BR makechrootpkg ,
+.BR mkchrootpkg ,
 the user container has a random name and is removed on build
 completion.
 
@@ -92,7 +92,7 @@ The default local repository, see
 .RE
 
 .SH NOTES
-.SS Building with makechrootpkg
+.SS Building with mkchrootpkg
 Changes to the pacman database are
 .I not
 propagated from the container to the local system. Packages must be
@@ -100,7 +100,7 @@ installed and updated separately, typically through
 .BI "pacman \-Syu " package_name\fR.
 
 Package conflicts inside the container must be solved manually, as
-.B makechrootpkg
+.B mkchrootpkg
 uses
 .B "makepkg \-\-noconfirm \-s"
 internally. For example, to replace
@@ -108,7 +108,7 @@ internally. For example, to replace
 with
 .I gcc\-multilib
 , run
-.B "arch\-nspawn /var/lib/aurbuild/root pacman \-S gcc\-multilib"
+.B "chroot-run /var/lib/aurbuild/root pacman \-S gcc\-multilib"
 as root.
 
 .SS Accessing the local repository
@@ -137,8 +137,8 @@ is run as the
 user, create the following sudoers policy:
 .EX
 
-  archie ALL = (root) NOPASSWD: SETENV: /usr/bin/makechrootpkg
-  archie ALL = (root) NOPASSWD: /usr/bin/mkarchroot, /usr/bin/arch-nspawn
+  archie ALL = (root) NOPASSWD: SETENV: /usr/bin/mkchrootpkg
+  archie ALL = (root) NOPASSWD: /usr/bin/mkchroot
 
 .EE
 .SY Note:
@@ -151,7 +151,7 @@ with the respective
 As in the example above, install the required packages:
 .EX
 
-  # arch-nspawn /var/lib/aurbuild/root pacman \-S ccache distcc
+  # chroot-run /var/lib/aurbuild/root pacman \-S ccache distcc
 
 .EE
 Ensure write access to

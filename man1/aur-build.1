@@ -24,7 +24,7 @@ prefix in
 All arguments after \-\- are passed to
 .BR makepkg (8),
 or
-.BR makechrootpkg
+.BR mkchrootpkg
 when
 .B \-c
 is specified. The default options are
@@ -44,7 +44,7 @@ A string used as build command
 (instead of
 .B makepkg
 or
-.BR makechrootpkg ).
+.BR mkchrootpkg ).
 The command has
 .BR PKGDEST ,
 .BR AUR_REPO ", and"
@@ -60,9 +60,9 @@ would set the build command to
 .TP
 .BR \-c ", " \-\-chroot
 Build packages inside a
-.BR systemd\-nspawn (1)
+.BR chroot (1)
 container with
-.BR makechrootpkg .
+.BR mkchrootpkg .
 See
 .BR aur\-chroot (1)
 for more information. The

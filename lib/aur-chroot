@@ -1,5 +1,5 @@
 #!/bin/bash
-# aur-chroot - build packages with systemd-nspawn
+# aur-chroot - build packages with chroot
 set -o errexit
 readonly argv0=chroot
 readonly PATH=/bin:/usr/bin
@@ -10,8 +10,8 @@ readonly machine
 
 # default arguments
 directory=/var/lib/aurbuild/$machine
-makechrootpkg_args=(-cu)
-makechrootpkg_bindmounts_ro=()
+mkchrootpkg_args=(-cu)
+mkchrootpkg_bindmounts_ro=()
 bindmounts_ro=()
 
 # default options
@@ -40,7 +40,7 @@ trap_exit() {
 }
 
 usage() {
-    printf >&2 'usage: %s [-d repo] [-CDM path] -- <makechrootpkg args>\n' "$argv0"
+    printf >&2 'usage: %s [-d repo] [-CDM path] -- <mkchrootpkg args>\n' "$argv0"
     exit 1
 }
 
@@ -77,16 +77,16 @@ unset opt_short opt_long OPTRET
 tmp=$(mktemp -d)
 trap 'trap_exit' EXIT
 
-# reset default makechrootpkg arguments
+# reset default mkchrootpkg arguments
 if (($#)); then
-    makechrootpkg_args=("$@")
+    mkchrootpkg_args=("$@")
 fi
 
 # baseline configuration
-pacman_conf=${pacman_conf-/usr/share/devtools/pacman-multilib.conf}
-makepkg_conf=${makepkg_conf-/usr/share/devtools/makepkg-$machine.conf}
+pacman_conf=${pacman_conf-/usr/share/artools/pacman-lib32.conf}
+makepkg_conf=${makepkg_conf-/usr/share/artools/makepkg.conf}
 
-# CacheDir will be replaced by devtools (#416)
+# CacheDir will be replaced by artools (#416)
 host_with_cache "${host_repo[@]}" >"$tmp"/custom.conf
 
 # bind mount all file:// paths to container (#461)
@@ -94,7 +94,7 @@ while read -r key _ value; do
     case $key=$value in
         Server=file://*)
             bindmounts_ro+=("--bind-ro=${value#file://}")
-            makechrootpkg_bindmounts_ro+=(-D "${value#file://}") ;;
+            mkchrootpkg_bindmounts_ro+=(-D "${value#file://}") ;;
     esac
 done < "$tmp"/custom.conf
 
@@ -103,24 +103,23 @@ if ((prepare)); then
     pacman-conf -c "$pacman_conf" | ignore_defaults \
         | cat - "$tmp"/custom.conf >"$tmp"/pacman.conf
 
-    if [[ -f $directory/root/.arch-chroot ]]; then
-        # locking is done by systemd-nspawn
-        sudo arch-nspawn -C "$tmp"/pacman.conf -M "$makepkg_conf" \
+    if [[ -f $directory/root/.artools ]]; then
+        sudo chroot-run -C "$tmp"/pacman.conf -M "$makepkg_conf" \
              "$directory"/root "${bindmounts_ro[@]}" pacman -Syu --noconfirm
     else
-        # parent path is not created by mkarchroot (#371)
+        # parent path is not created by mkchroot (#371)
         if [[ ! -d $directory ]]; then
             sudo install -d "$directory" -m 755 -v
         fi
 
-        sudo mkarchroot -C "$tmp"/pacman.conf -M "$makepkg_conf" \
+        sudo mkchroot -C "$tmp"/pacman.conf -M "$makepkg_conf" \
              "$directory"/root base-devel
     fi
 fi
 
 if ((build)); then
-    sudo --preserve-env=GNUPGHOME,PKGDEST makechrootpkg -r "$directory" \
-         "${makechrootpkg_bindmounts_ro[@]}" "${makechrootpkg_args[@]}"
+    sudo --preserve-env=GNUPGHOME,PKGDEST mkchrootpkg -r "$directory" \
+         "${mkchrootpkg_bindmounts_ro[@]}" "${mkchrootpkg_args[@]}"
 else
     printf >&2 'container path: %q\n' "$directory"
     exit 0

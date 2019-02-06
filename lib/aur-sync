@@ -11,8 +11,8 @@ readonly PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 # default arguments
 build_args=()
 fetch_args=()
-makechrootpkg_args=(-cu)
-makechrootpkg_makepkg_args=()
+mkchrootpkg_args=(-cu)
+mkchrootpkg_makepkg_args=()
 makepkg_args=(--clean --syncdeps)
 repo_args=()
 
@@ -107,14 +107,14 @@ while true; do
         -D|--directory)       shift; build_args+=(-D "$1") ;;
         -M|--makepkg-conf)    shift; build_args+=(--makepkg-conf "$1") ;;
         -C|--pacman-conf)     shift; build_args+=(--pacman-conf "$1") ;;
-        --bind)               shift; makechrootpkg_args+=(-D "$1") ;;
-        --bind-rw)            shift; makechrootpkg_args+=(-d "$1") ;;
+        --bind)               shift; mkchrootpkg_args+=(-D "$1") ;;
+        --bind-rw)            shift; mkchrootpkg_args+=(-d "$1") ;;
         --ignore)             shift; IFS=, read -a pkg -r <<< "$1"
                               pkg_i+=("${pkg[@]}") ;;
         --ignore-file)        shift; mapfile -t pkg_i < "$1" ;;
         --root)               shift; repo_args+=(-r "$1") ;;
         -A|--ignore?(-)arch)  makepkg_args+=(--ignorearch)
-                              makechrootpkg_makepkg_args+=(-A) ;;
+                              mkchrootpkg_makepkg_args+=(-A) ;;
         -c|--chroot)          chroot=1; build_args+=(-c) ;;
         -f|--force)           build_args+=(-f) ;;
         -g|--git)             snapshot=0 ;;
@@ -126,7 +126,7 @@ while true; do
         -R)                   build_args+=(-R) ;;
         -s|--sign)            build_args+=(-sv) ;;
         -t|--tar)             snapshot=1 ;;
-        -T|--temp)            makechrootpkg_args+=(-T) ;;
+        -T|--temp)            mkchrootpkg_args+=(-T) ;;
         -u|--upgrades)        update=1 ;;
         --allan)              rotate=1 ;;
         --continue)           download=0 ;;
@@ -280,8 +280,8 @@ if ((build)); then
     build_args+=(-a "$tmp"/queue -d "$db_name" -r "$db_root")
 
     if ((chroot)); then
-        aur build "${build_args[@]}" -- "${makechrootpkg_args[@]}" \
-            -- "${makechrootpkg_makepkg_args[@]}"
+        aur build "${build_args[@]}" -- "${mkchrootpkg_args[@]}" \
+            -- "${mkchrootpkg_makepkg_args[@]}"
     else
         aur build "${build_args[@]}" -- "${makepkg_args[@]}"
     fi
