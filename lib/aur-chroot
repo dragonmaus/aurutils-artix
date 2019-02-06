@@ -93,7 +93,7 @@ host_with_cache "${host_repo[@]}" >"$tmp"/custom.conf
 while read -r key _ value; do
     case $key=$value in
         Server=file://*)
-            bindmounts_ro+=("--bind-ro=${value#file://}")
+            bindmounts_ro+=("-r ${value#file://}")
             mkchrootpkg_bindmounts_ro+=(-D "${value#file://}") ;;
     esac
 done < "$tmp"/custom.conf
@@ -105,7 +105,7 @@ if ((prepare)); then
 
     if [[ -f $directory/root/.artools ]]; then
         sudo chroot-run -C "$tmp"/pacman.conf -M "$makepkg_conf" \
-             "$directory"/root "${bindmounts_ro[@]}" pacman -Syu --noconfirm
+             "${bindmounts_ro[@]}" "$directory"/root pacman -Syu --noconfirm
     else
         # parent path is not created by mkchroot (#371)
         if [[ ! -d $directory ]]; then
