@@ -13,6 +13,7 @@ directory=/var/lib/aurbuild/$machine
 mkchrootpkg_args=(-cu)
 mkchrootpkg_bindmounts_ro=()
 bindmounts_ro=()
+mkdirs=()
 
 # default options
 prepare=1 build=1
@@ -93,6 +94,7 @@ host_with_cache "${host_repo[@]}" >"$tmp"/custom.conf
 while read -r key _ value; do
     case $key=$value in
         Server=file://*)
+            mkdirs+=("${value#file://}")
             bindmounts_ro+=("-r ${value#file://}")
             mkchrootpkg_bindmounts_ro+=(-D "${value#file://}") ;;
     esac
@@ -104,6 +106,13 @@ if ((prepare)); then
         | cat - "$tmp"/custom.conf >"$tmp"/pacman.conf
 
     if [[ -f $directory/root/.artools ]]; then
+        # mount complains about missing directories
+        for dir in "${mkdirs[@]}"; do
+            if [[ ! -d $directory/root/$dir ]]; then
+                sudo install -d "$directory"/root/"$dir" -m 755 -v
+            fi
+        done
+
         sudo chroot-run -C "$tmp"/pacman.conf -M "$makepkg_conf" \
              "${bindmounts_ro[@]}" "$directory"/root pacman -Syu --noconfirm
     else
@@ -114,6 +123,13 @@ if ((prepare)); then
 
         sudo mkchroot -C "$tmp"/pacman.conf -M "$makepkg_conf" \
              "$directory"/root base-devel
+
+        # mount complains about missing directories
+        for dir in "${mkdirs[@]}"; do
+            if [[ ! -d $directory/root/$dir ]]; then
+                sudo install -d "$directory"/root/"$dir" -m 755 -v
+            fi
+        done
     fi
 fi
 
