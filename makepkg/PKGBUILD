@@ -1,6 +1,6 @@
 # Maintainer: David Wildasin <https://github.com/dragonmaus>
 pkgname=aurutils-artix-git
-pkgver=2.2.0.r16.gecdb75b
+pkgver=2.3.1.r40.g660748b
 pkgrel=1
 pkgdesc='helper tools for the arch user repository (artix fork)'
 url='https://github.com/dragonmaus/aurutils-artix'
@@ -10,12 +10,11 @@ source=('git+https://github.com/dragonmaus/aurutils-artix')
 sha256sums=('SKIP')
 conflicts=('aurutils' 'aurutils-git')
 provides=("aurutils=${pkgver%%.r*}")
-depends=('git' 'jq' 'expac' 'diffstat' 'pacutils' 'parallel' 'wget')
+depends=('git' 'jq' 'pacutils' 'parallel' 'wget')
 makedepends=('git')
 optdepends=('bash-completion: bash completion'
             'artools-pkg: aur-chroot'
-            'vifm: build file interaction'
-            'xdelta3: generate delta files')
+            'vifm: build file interaction')
 
 pkgver() {
     cd aurutils-artix

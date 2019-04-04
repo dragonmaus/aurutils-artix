@@ -52,7 +52,13 @@ separating them with a comma, or by repeating the \fB\-\-ignore\fR option.
 .BI \-\-ignore\-file= FILE
 Ignore package upgrades listed in
 .IR FILE .
-Each package name should be specified on a separate line.
+Each package name should be specified on a separate line. Defaults to
+.BR $XDG_CONFIG_HOME/aurutils/sync/ignore .
+
+.TP
+.BR \-\-nograph ", " \-\-no\-graph
+Do not verify the AUR dependency graph with
+.BR aur\-graph (1).
 
 .TP
 .BR \-\-nover ", " \-\-no\-ver
@@ -117,16 +123,6 @@ The path pointing to the container. (\fBaur build \-D\fR)
 Do not download package files.
 
 .TP
-.BR \-g ", " \-\-git
-Clone AUR repositories with
-.BR git-clone (1).
-
-.TP
-.BR \-t ", " \-\-tar
-Download AUR snapshots (\fIpkgbase.tar.gz\fR) and extract them with
-.BR tar (1).
-
-.TP
 .BR \-\-noview ", " \-\-no\-view
 Do not present build files for inspection.
 
@@ -138,6 +134,14 @@ Take virtual dependencies
 in the local repository into account. Version information is not
 considered. Packages specified on the command line or available
 upgrades are taken as target regardless of this setting.
+
+.RS
+.B Note:
+This option does not take other repositories than the local repository 
+into account. Furthermore, the version output from
+.BR aur\-vercmp (1)
+is unaffected by this option.
+.RE
 
 .TP
 .BI \-d " NAME" "\fR,\fP \-\-database=" NAME
@@ -158,8 +162,14 @@ The location of the repository root. Defaults to the
 value of the configured repository.
 
 .TP
+.B \-R
+Remove old package files from disk when updating their entry in the
+database
+.RB ( "aur\-build \-R" ).
+
+.TP
 .BR \-u ", " \-\-upgrades
-Update all AUR packages in a local repository that are obsolete.
+Update all obsolete AUR packages in a local repository.
 
 .SS makepkg
 The default build command is
@@ -229,6 +239,25 @@ split on white space, allowing
 .RE
 
 .SH NOTES
+.SS File inspection
+.BR aur\-sync (1)
+aborts on build failure, or other errors such as an interrupted file 
+review process by the user, in particular
+.B :cq
+in
+.BR vifm (1),
+or
+.B "Ctrl+C"
+in
+.BR less (1).
+
+To avoid downloading files again, the
+.B \-\-continue
+option may be used. This may be combined with
+.BR aur\-depends (1)
+to build dependency trees independently; see GitHub issue #350.
+
+.SS Standard input
 Targets may be taken from stdin using
 .BR xargs (1).
 For example:
@@ -249,15 +278,17 @@ file:
 
 .EE
 
+.SS File retrieval
 When version checks are enabled (\fB\-\-no\-ver\fR is not specified),
 build files are only retrieved if the remote (RPC) version is newer
-than a version in the pacman database. Checks assume there are no
+than the version in a pacman database. Checks assume there are no
 mismatches between
 .B .SRCINFO
 and
 .B PKGBUILD
 files.
 
+.SS lib32
 Architecture-specific depends (as introduced with pacman 4.2) are
 merged with regular depends in RPC queries.
 .B aur\-sync
@@ -266,13 +297,6 @@ works around this by stripping the
 prefix from packages and removing
 .I gcc\-multilib
 if the i686 architecture is detected.
-
-.I tar
-snapshots are extracted to the
-.I $AURDEST_SNAPSHOT
-directory in order to avoid conflicts with
-.BR git (1)
-repositories.
 
 .SH SEE ALSO
 .BR aur (1),

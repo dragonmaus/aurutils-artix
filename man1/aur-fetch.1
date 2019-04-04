@@ -1,6 +1,6 @@
 .TH AUR-FETCH 1 2018-02-14 AURUTILS
 .SH NAME
-aur\-fetch \- fetch packages from a location
+aur\-fetch \- download packages from the AUR
 
 .SH SYNOPSIS
 .SY "aur fetch"
@@ -8,13 +8,13 @@ aur\-fetch \- fetch packages from a location
 .OP \-t
 .OP \-g
 .OP \-r
+.IR "package [package...]"
 .YS
 
 .SH DESCRIPTION
 .B aur\-fetch
-accepts URIs to packages from
-.IR stdin ,
-and attempts to download them. It is capable of handling
+downloads packages, specified on the command-line, from the AUR. It is
+capable of handling
 .BR tar (1)
 archives and
 .BR git (1)
@@ -22,27 +22,26 @@ repositories.
 
 .SH OPTIONS
 .TP
-.BI "\-L " log_dir
+.BI \-M " FILE" "\fR,\fP \-\-makepkg\-conf=" FILE
+.BI \-L " DIRECTORY" "\fR,\fP \-\-write\-log=" DIRECTORY
 The location of where to store the diffs of previously unpacked
 archives.
 
 .TP
 .B \-t
-Downloads the package as a
+Download packages as
 .I tar
-archive with
-.BR aur\-fetch\-snapshot .
+archives.
 
 .TP
 .B \-g
-Downloads the package as a
+Download packages as
 .I git
-repository with
-.BR aur\-fetch\-git .
+repositories.
 
 .TP
 .B \-r
-Download both packages and their dependencies with
+Download packages and their dependencies with
 .BR aur-depends (1).
 
 .SH SEE ALSO

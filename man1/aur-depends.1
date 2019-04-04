@@ -5,13 +5,13 @@ aur\-depends \- retrieve dependencies using aurweb
 .SH SYNOPSIS
 .SY "aur depends"
 .OP \-abnt
+.IR "pkgname [pkgname...]"
 .YS
 
 .SH DESCRIPTION
-.B aur\-depends
-takes package names from
-.IR stdin ,
-and solves the dependencies for those packages using aurweb.
+.B aur\-depends 
+solves dependencies for packages provided on the command-line,
+using aurweb.
 
 .SH OPTIONS
 .TP

@@ -62,7 +62,6 @@ while true; do
     esac
     shift
 done
-unset opt_short opt_long OPTRET
 
 # default to regex if >0 arguments specified
 case $# in

@@ -59,7 +59,6 @@ while true; do
     esac
     shift
 done
-unset opt_short opt_long OPTRET
 
 # set filters
 case $type in

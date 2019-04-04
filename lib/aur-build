@@ -15,7 +15,7 @@ makepkg_args=(--clean --syncdeps)
 repo_add_args=()
 
 # default options
-chroot=0 no_sync=0 overwrite=0 sign_pkg=0 run_pkgver=0
+chroot=0 no_sync=0 overwrite=0 sign_pkg=0 run_pkgver=0 results=0
 
 conf_single() {
     awk -v "repo=[$1]" '
@@ -39,7 +39,7 @@ trap_exit() {
 }
 
 usage() {
-    plain "usage: $argv0 [-d repo] [-aCDMr path] [-cfNRsv] [--] <makepkg args>" >&2
+    plain "usage: $argv0 [-d repo] [-aCDMr path] [-cfNRXsv] [--] <makepkg args>" >&2
     exit 1
 }
 
@@ -52,9 +52,9 @@ if [[ -t 2 && ! -o xtrace ]]; then
 fi
 
 ## option parsing
-opt_short='a:B:C:d:D:M:r:cfNRsv'
+opt_short='a:B:C:d:D:M:r:cfNRXsv'
 opt_long=('arg-file:' 'chroot' 'database:' 'force' 'root:' 'sign'
-          'verify' 'directory:' 'no-sync' 'pacman-conf:'
+          'verify' 'directory:' 'no-sync' 'pacman-conf:' 'results:'
           'makepkg-conf:' 'remove' 'build-command:' 'pkgver')
 opt_hidden=('dump-options')
 
@@ -63,7 +63,7 @@ if ! parseopts "$opt_short" "${opt_long[@]}" "${opt_hidden[@]}" -- "$@"; then
 fi
 set -- "${OPTRET[@]}"
 
-unset queue db_name db_path db_root build_cmd m_conf p_conf
+unset queue db_name db_path db_root build_cmd m_conf p_conf results_file
 while true; do
     case "$1" in
         -a|--arg-file)      shift; queue=$1 ;;
@@ -83,6 +83,7 @@ while true; do
         -R|--remove)        repo_add_args+=(-R) ;;
         --pkgver)           run_pkgver=1
                             makepkg_args+=(--holdver) ;;
+        --results)          shift; results_file=$1 ;;
         --dump-options) printf -- '--%s\n' "${opt_long[@]}"
                         printf -- '%s' "${opt_short}" | sed 's/.:\?/-&\n/g'
                         exit ;;
@@ -90,7 +91,6 @@ while true; do
     esac
     shift
 done
-unset opt_short opt_long OPTRET
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/$argv0".XXXXXXXX)
 var_tmp=$(mktemp -d "${TMPDIR:-/var/tmp}/$argv0".XXXXXXXX)
@@ -105,10 +105,6 @@ if (($#)); then
     else
         makepkg_args=("$@")
     fi
-fi
-
-if type -P xdelta3 >/dev/null; then
-    repo_add_args+=(-d)
 fi
 
 # assign environment variables
@@ -153,6 +149,16 @@ else
     exec {fd}< <(printf '\n')
 fi
 
+# write successfully built packages to file (#437)
+if [[ -v results_file ]]; then
+    if [[ -w $results_file ]]; then
+        results=1
+    else
+        error "$argv0: $results_file: permission denied"
+        exit 13
+    fi
+fi
+
 if ((sign_pkg)); then
     if [[ -v GPGKEY ]]; then
         gpg --list-keys "$GPGKEY"
@@ -170,12 +176,14 @@ else
     fi
 fi
 
-# configuration for container builds
+# Configuration for container builds. This step is run before the
+# build to save time when the (root) container has not been updated
+# for a longer period of time.
 if ((chroot)); then
     aur chroot --no-build "${chroot_args[@]}"
 fi
 
-# configuration for host builds
+# Configuration for host builds.
 pacman-conf --config "${p_conf:-/etc/pacman.conf}" | conf_single "$db_name" >"$tmp"/custom.conf
 
 # PKGDEST is defined later through makepkg.conf (#513)
@@ -200,7 +208,8 @@ while IFS= read -ru "$fd" path; do
 
     # run pkgver before --packagelist (#500)
     if ((run_pkgver)); then
-        makepkg --noprepare -od
+        # ignore architecture in pkgver() function (#536)
+        makepkg --noprepare -od --ignorearch
     fi
 
     if ! ((overwrite)); then
@@ -260,6 +269,10 @@ while IFS= read -ru "$fd" path; do
     # update database
     cd_safe "$db_root"
     LANG=C repo-add "${repo_add_args[@]}" "$db_path" "${pkglist[@]}"
+
+    if ((results)); then
+        printf '%s\n' "${pkglist[@]}" | tee -a "$results_file"
+    fi
 
     if ((chroot)) || ((no_sync)); then
         continue

@@ -151,7 +151,6 @@ while true; do
     esac
     shift
 done
-unset opt_short opt_long OPTRET
 
 if ! (($#)); then
     usage

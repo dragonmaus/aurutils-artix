@@ -9,16 +9,10 @@ vercmp_args=()
 
 db_namever() {
     awk '/%NAME%/ {
-        getline
-        printf("%s\t", $1)
+        getline; pkgname=$1
     } /%VERSION%/ {
-        getline
-        printf("%s\n", $1)
+        getline; printf("%s\t%s\n", pkgname, $1)
     }'
-}
-
-ex_namever() {
-    awk -F"/" -v rname="^$1/" '$0 ~ rname { print $NF }'
 }
 
 usage() {
@@ -34,8 +28,9 @@ if [[ -t 2 && ! -o xtrace ]]; then
 fi
 
 ## option parsing
-opt_short='d:r:alSu'
-opt_long=('all' 'database:' 'list' 'root:' 'upgrades' 'repo-list' 'sync')
+opt_short='c:d:r:aluS'
+opt_long=('database:' 'pacman-conf:' 'root:'
+          'all' 'list' 'repo-list' 'sync' 'upgrades')
 opt_hidden=('dump-options' 'status-file:')
 
 if ! parseopts "$opt_short" "${opt_long[@]}" "${opt_hidden[@]}" -- "$@"; then
@@ -43,26 +38,25 @@ if ! parseopts "$opt_short" "${opt_long[@]}" "${opt_hidden[@]}" -- "$@"; then
 fi
 set -- "${OPTRET[@]}"
 
-unset mode db_name db_root status_file
+unset mode db_name db_root status_file pacman_conf
 while true; do
     case $1 in
-        -d|--database)  shift; db_name=$1 ;;
-        -r|--root)      shift; db_root=$1 ;;
-        -a|--all)       mode=list_upgrades
-                        vercmp_args+=(-a) ;;
-        -l|--list)      mode=list_packages ;;
-        -u|--upgrades)  mode=list_upgrades ;;
-        -S|--sync)      modifier=sync ;;
-        --repo-list)    mode=repo_list ;;
-        --status-file)  shift; status_file=$1 ;;
-        --dump-options) printf -- '--%s\n' "${opt_long[@]}" ;
-                        printf -- '%s' "${opt_short}" | sed 's/.:\?/-&\n/g' ;
-                        exit ;;
+        -d|--database)      shift; db_name=$1 ;;
+        -r|--root)          shift; db_root=$1 ;;
+        -c|--pacman-conf)   shift; pacman_conf=$1 ;;
+        -a|--all)           mode=list_upgrades; vercmp_args+=(-a) ;;
+        -l|--list)          mode=list_packages ;;
+        -S|--sync)          modifier=sync ;;
+        -u|--upgrades)      mode=list_upgrades ;;
+        --repo-list)        mode=repo_list ;;
+        --status-file)      shift; status_file=$1 ;;
+        --dump-options)     printf -- '--%s\n' "${opt_long[@]}" ;
+                            printf -- '%s' "${opt_short}" | sed 's/.:\?/-&\n/g' ;
+                            exit ;;
         --) shift; break ;;
     esac
     shift
 done
-unset opt_short opt_long OPTRET
 
 # assign environment variables
 : "${db_name=$AUR_REPO}"
@@ -75,9 +69,12 @@ while read -r key _ value; do
         \[*\]*)
             section=${key:1:-1}
             ;;
+        DBPath=)
+            pacman_dbpath=$key
+            ;;
         Server=file://*)
             server=${value#file://}
-            conf_repo+=("$section" "$server")
+            conf_repo+=("$server" "$section")
 
             case $section in
                 $db_name)
@@ -97,14 +94,14 @@ while read -r key _ value; do
             esac
             ;;
     esac
-done < <(pacman-conf)
+done < <(pacman-conf --config "${pacman_conf:-/etc/pacman.conf}")
 
 # exclusive modes
 case $mode in
     #requires (none)
     repo_list)
         if [[ ${conf_repo[*]} ]]; then
-            printf '%s\n' "${conf_repo[@]}" | paste - -
+            printf '%q/%q.db\n' "${conf_repo[@]}"
         else
             plain "no file:// repository configured"
         fi
@@ -113,14 +110,14 @@ esac
 
 if ! [[ $db_name ]]; then
     case ${#conf_repo[@]} in
-        2) db_name=${conf_repo[0]}
-           db_root=${conf_repo[1]}
+        2) db_root=${conf_repo[0]}
+           db_name=${conf_repo[1]}
            ;;
         0) error "no file:// repository found"
            exit 2
            ;;
         *) error "repository choice is ambiguous (use -d to specify)"
-           printf '%s\n' "${conf_repo[@]}" | paste - - | column -t >&2
+           printf '%q\n' "${conf_repo[@]}" | paste - - | column -t >&2
            exit 1
            ;;
     esac
@@ -150,7 +147,7 @@ case $modifier in
     #requires
     # - [$db_name] (pacman.conf)
     sync)
-        contents() { expac -Sv '%r/%n\t%v' | ex_namever "$db_name"; }
+        contents() { bsdcat "$pacman_dbpath/sync/$db_name".db | db_namever; }
         ;;
 esac
 

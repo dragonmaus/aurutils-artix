@@ -1,5 +1,7 @@
 #compdef aur
 
+zstyle ':completion::complete:aur:argument-rest:' sort false
+
 _aur() {
     local context state state_descr line
     typeset -A opt_args

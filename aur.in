@@ -22,7 +22,9 @@ if [[ -z $1 ]]; then
     exit 1
 fi
 
-readonly PATH=$lib_dir:$PATH
+if [[ "$PATH" != "$lib_dir:"* ]]; then
+    readonly PATH=$lib_dir:$PATH
+fi
 
 if type -P "aur-$1" >/dev/null; then
     exec "aur-$1" "${@:2}"

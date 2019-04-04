@@ -2,9 +2,9 @@ divert(-1)dnl
 dnl List of commands to be completed
 dnl
 define(`CORECOMMANDS',
-HAVE_OPTDUMP(build,search,fetch,repo-filter,
-             repo,chroot,pkglist,vercmp,sync,rpc)dnl
-NO_OPTDUMP(depends,jobs,graph,srcver,vercmp-devel))
+HAVE_OPTDUMP(build,chroot,depends,fetch,pkglist,repo,
+             repo-filter,rpc,search,srcver,sync,vercmp)dnl
+NO_OPTDUMP(graph,jobs,vercmp-devel))
 
 dnl recursively print all elements
 dnl How the element is ultimately printed depends on the
@@ -27,6 +27,6 @@ CORECOMMANDS')
 
 dnl Helper macro to retrieves options from subcommand --dump-options
 dnl
-define(GET_OPTS,'`translit(esyscmd(../lib/aur-$1 --dump-options),`
+define(GET_OPTS,'`translit(esyscmd(bash -c "../lib/aur-$1 --dump-options | LC_ALL=C sort"),`
 ',` ')'')
 divert(0)dnl

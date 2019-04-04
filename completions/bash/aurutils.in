@@ -28,4 +28,4 @@ _aur_completion()
 }
 
 
-complete -o bashdefault -o default -F _aur_completion aur
+complete -o bashdefault -o default -o nosort -F _aur_completion aur
