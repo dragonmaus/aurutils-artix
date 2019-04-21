@@ -30,11 +30,16 @@ uri_search() {
 }
 
 usage() {
-    printf >&2 'usage: %s [-t [info|search] ] [-b by]\n' "$argv0"
+    plain 'usage: %s [-t [info|search] ] [-b by]' "$argv0" >&2
     exit 1
 }
 
+source /usr/share/makepkg/util/message.sh
 source /usr/share/makepkg/util/parseopts.sh
+
+if [[ -t 2 && ! -o xtrace ]]; then
+    colorize
+fi
 
 opt_short='b:t:'
 opt_long=('by:' 'type:' 'aur-url:' 'rpc-ver:' 'rpc-url:')

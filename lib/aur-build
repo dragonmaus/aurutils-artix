@@ -39,7 +39,7 @@ trap_exit() {
 }
 
 usage() {
-    plain "usage: $argv0 [-d repo] [-aCDMr path] [-cfNRXsv] [--] <makepkg args>" >&2
+    plain 'usage: %s [-d repo] [-aCDMr path] [-cfNRXsv] [--] <makepkg args>' "$argv0" >&2
     exit 1
 }
 

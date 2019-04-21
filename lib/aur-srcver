@@ -36,7 +36,7 @@ trap_exit() {
 }
 
 usage() {
-    plain "usage: $argv0 [--noprepare] <pkgbase> [<pkgbase> ...]" >&2
+    plain 'usage: %s [--noprepare] <pkgbase> [<pkgbase> ...]' "$argv0" >&2
     exit 1
 }
 

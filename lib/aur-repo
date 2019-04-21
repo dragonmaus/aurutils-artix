@@ -16,7 +16,7 @@ db_namever() {
 }
 
 usage() {
-    plain "usage: $argv0 [-d repo] [-r path] [-alSu]" >&2
+    plain 'usage: %s [-d repo] [-r path] [-alSu]' "$argv0" >&2
     exit 1
 }
 

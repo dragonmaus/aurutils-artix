@@ -68,7 +68,7 @@ trap_exit() {
 }
 
 usage() {
-    plain "usage: $argv0 [-p path] [-acq]" >&2
+    plain 'usage: %s [-p path] [-acq]' "$argv0" >&2
     exit 1
 }
 

@@ -71,7 +71,7 @@ trap_exit() {
 }
 
 usage() {
-    plain "usage: $argv0 [-d repo] [-CDM path] [-AcfkLnpPsTu] [--] pkgname..." >&2
+    plain 'usage: %s [-d repo] [-CDM path] [-AcfkLnpPsTu] [--] pkgname...' "$argv0" >&2
     exit 1
 }
 

@@ -20,7 +20,7 @@ provides() {
 }
 
 usage() {
-    printf >&2 'usage: %s [-d repo] [-S]\n' "$argv0"
+    plain 'usage: %s [-d repo] [-S]' "$argv0" >&2
     exit 1
 }
 
