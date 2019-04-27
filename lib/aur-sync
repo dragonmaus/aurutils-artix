@@ -7,6 +7,7 @@ readonly XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 readonly XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
 readonly AURDEST=${AURDEST:-$XDG_CACHE_HOME/aurutils/$argv0}
 readonly PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+readonly AUR_COLOR=${AUR_COLOR-auto}
 
 # default arguments
 build_args=()
@@ -79,7 +80,7 @@ source /usr/share/makepkg/util/util.sh
 source /usr/share/makepkg/util/message.sh
 source /usr/share/makepkg/util/parseopts.sh
 
-if [[ -t 2 && ! -o xtrace ]]; then
+if [[ ( -t 1 && -t 2 && ! -o xtrace && $AUR_COLOR == auto ) || $AUR_COLOR == always ]] ; then
     colorize
 fi
 
@@ -255,12 +256,19 @@ fi
 # link build files in the queue (absolute links)
 aur jobs -X ln -s "$(pwd -P)"/{} "$tmp_view" :::: "$tmp"/queue
 
+# Explicitly define if exit success is to be trusted (#561)
+trust_exit_success=0
 if type -P >/dev/null vifm; then
     # avoid directory prefix in printed paths (#452)
     viewer() ( cd "$1"; vifm -c 'view!' -c '0' - )
+    trust_exit_success=1
 else
     # shellcheck disable=SC2086
     viewer() ( cd "$1"; command -- ${PAGER:-less -K -+F} )
+    # Trust our fallback
+    if [[ -z $PAGER ]]; then
+        trust_exit_success=1
+    fi
 fi
 
 # check if dependency graph is valid
@@ -269,6 +277,7 @@ if ((graph)); then
 fi
 
 if ((view)); then
+    # AUR_PAGER exit codes are respected by definition.
     if [[ -v AUR_PAGER ]]; then
         # shellcheck disable=SC2086
         command -- $AUR_PAGER "$tmp_view"
@@ -280,8 +289,8 @@ if ((view)); then
           xargs -I{} -a "$tmp"/queue find -L "$tmp_view"/{} -maxdepth 1
         } | viewer "$tmp_view"
 
-        # ask for confirmation when using PAGER (#530)
-        if [[ -v PAGER ]]; then
+        # ask for confirmation when viewer() exit success is not trusted (#530) (#561)
+        if ! ((trust_exit_success)); then
             read -rp $'Press Return to continue or Ctrl+d to abort\n'
         fi
     fi
