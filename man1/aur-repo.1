@@ -47,7 +47,7 @@ when checking for updates. Implies
 .TP
 .BR \-l ", " \-\-list
 List the contents of the repository in
-.BI pkgname\tpkgver
+.BI pkgname \et pkgver
 format. If the
 .B \-S
 option is not enabled, the repository is queried directly through the
@@ -67,14 +67,17 @@ to check a pacman repository for updates.
 
 .TP
 .BR \-\-repo\-list
-List all local (with a
-.B file://
-prefix) pacman repositories, in
-.BI name\tServer
-format.
+List all local pacman repositories.
 
 .SH SEE ALSO
 .BR aur (1),
 .BR aur\-vercmp (1),
 .BR pacman (8),
 .BR pacman.conf (5)
+
+.SH AUTHORS
+.MT https://github.com/AladW
+Alad Wenter
+.ME
+
+.\" vim: set textwidth=72:

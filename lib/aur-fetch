@@ -7,7 +7,7 @@ readonly PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[1]}(): }'
 readonly AUR_COLOR=${AUR_COLOR-auto}
 
 # default options
-verbose=0 recurse=0 fetch_args=('--verbose')
+verbose=0 recurse=0 fetch_args=('--verbose') confirm_seen=0
 
 usage() {
     cat <<! | base64 -d
@@ -26,7 +26,7 @@ if [[ ( -t 1 && -t 2 && ! -o xtrace && $AUR_COLOR == auto ) || $AUR_COLOR == alw
 fi
 
 opt_short='rvL:'
-opt_long=('recurse' 'verbose' 'write-log:' 'force')
+opt_long=('recurse' 'verbose' 'write-log:' 'force' 'confirm-seen')
 opt_hidden=('dump-options')
 
 if ! parseopts "$opt_short" "${opt_long[@]}" "${opt_hidden[@]}" -- "$@"; then
@@ -41,6 +41,7 @@ while true; do
         -r|--recurse)   recurse=1 ;;
         -v|--verbose)   verbose=1 ;;
         --force)        fetch_args+=('--force') ;;
+        --confirm-seen) confirm_seen=1 ;;
         --dump-options) printf -- '--%s\n' "${opt_long[@]}" ;
                         printf -- '%s' "${opt_short}" | sed 's/.:\?/-&\n/g' ;
                         exit ;;
@@ -69,6 +70,10 @@ if [[ ! -s $orderfile ]]; then
     printf 'PKGBUILD\n' > "$orderfile"
 fi
 
+if ((confirm_seen)); then
+    msg "Marking repositories as seen"
+fi
+
 if (( recurse )); then
     aur depends --pkgbase "$@"
 else
@@ -78,24 +83,41 @@ fi | while read -r pkg; do
         # Avoid issues with filesystem boundaries. (#274)
         export GIT_DIR=$pkg/.git GIT_WORK_TREE=$pkg
 
-        git fetch "${fetch_args[@]}" || exit 1
+        if (( confirm_seen )); then
+            git update-ref AURUTILS_SEEN HEAD
+            msg2 'Marked %s as seen' "$pkg"
+            continue
+        fi
 
-        if [[ $(git rev-parse HEAD) != $(git rev-parse '@{upstream}') ]]; then
-            # Only print log on upstream changes.
+        # Discard any local uncommited changes. (#552)
+        git reset --hard HEAD >&2
+        git pull --rebase "${fetch_args[@]}" || exit 1
+
+        if ! git diff-files --diff-filter=U --quiet; then
+            warning '%s: Local commits conflict with upstream. Fix the conflicts and commit them.' "$pkg"
+            exit 1
+        fi
+
+        seen=$(git rev-parse --quiet --verify AURUTILS_SEEN);
+
+        if [[ "$seen" != $(git rev-parse HEAD) ]]; then
+            log_range="${seen:+$seen..}HEAD"
+
             if (( verbose )); then
-                git --no-pager log --patch --stat '..@{upstream}'
+                git --no-pager log --patch --stat "${log_range}"
             fi
 
             if [[ $log_dir ]]; then
-                git --no-pager log --patch --stat '..@{upstream}' > "$log_dir/$pkg".patch
-                printf '%s/%s.patch\n' "$log_dir" "$GIT_DIR"
+                logfile="$log_dir/$pkg".patch
+                git --no-pager log --patch --stat "${log_range}" >"$logfile"
+                plain '%s' "$logfile"
             fi
-
-            # Discard any local changes. (#349)
-            git reset --hard 'HEAD@{upstream}' >&2
         fi
     else
         if git clone "$AUR_LOCATION"/"$pkg".git; then
+            if (( confirm_seen )); then
+                warning 'fetch: --confirm-seen for %s ignored on first clone' "$pkg"
+            fi
             # show PKGBUILDS first (#399)
             git -C "$pkg" config diff.orderFile "$orderfile"
             # only allow fast-forward fetches. (#)

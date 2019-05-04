@@ -5,6 +5,7 @@ readonly argv0=pkglist
 readonly cache=${XDG_CACHE_HOME:-$HOME/.cache}/aurutils/$argv0
 readonly AUR_LOCATION=${AUR_LOCATION:-'https://aur.archlinux.org'}
 readonly PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+readonly AUR_COLOR=${AUR_COLOR-auto}
 
 # default options
 delay=300
@@ -41,7 +42,7 @@ usage() {
 source /usr/share/makepkg/util/message.sh
 source /usr/share/makepkg/util/parseopts.sh
 
-if [[ -t 2 && ! -o xtrace ]]; then
+if [[ ( -t 1 && -t 2 && ! -o xtrace && $AUR_COLOR == auto ) || $AUR_COLOR == always ]] ; then
     colorize
 fi
 

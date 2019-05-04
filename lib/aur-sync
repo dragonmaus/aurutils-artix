@@ -294,6 +294,7 @@ if ((view)); then
             read -rp $'Press Return to continue or Ctrl+d to abort\n'
         fi
     fi
+    xargs -a "$tmp/queue" aur fetch --confirm-seen
 fi
 
 if ((build)); then
